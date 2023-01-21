@@ -1,11 +1,15 @@
 import { type NextPage } from "next";
+import React, { useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
 
 import { api } from "../utils/api";
+import { ShoppingItem } from "@prisma/client";
+
+import ItemModal from "../components/itemModal";
 
 const Home: NextPage = () => {
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
+  const [items, setItems] = useState<Array<ShoppingItem>>([]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <>
@@ -15,16 +19,25 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      {modalOpen && <ItemModal setModalOpen={setModalOpen} />}
+
       <main className="mx-auto my-12 max-w-3xl">
-        <div className="flex justify-between">
+        <header className="flex justify-between py-2 px-4">
           <h2 className="text-2xl font-semibold">My shopping list</h2>
           <button
             type="button"
+            onClick={() => setModalOpen(true)}
             className="rounded-md bg-violet-500 p-2 text-sm text-white transition hover:bg-violet-600"
           >
             Add shopping item
           </button>
-        </div>
+        </header>
+
+        <ul>
+          {items.map((item) => (
+            <li key={item.id}>{item.name}</li>
+          ))}
+        </ul>
       </main>
     </>
   );
