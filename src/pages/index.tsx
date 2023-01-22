@@ -5,11 +5,42 @@ import Head from "next/head";
 import { api } from "../utils/api";
 import { ShoppingItem } from "@prisma/client";
 
-import ItemModal from "../components/itemModal";
+import ItemModal from "../components/ItemModal";
+
+import { MdClose } from "../components/Icons";
 
 const Home: NextPage = () => {
   const [items, setItems] = useState<Array<ShoppingItem>>([]);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const { data: itemsData, isLoading } = api.item.getAllItems.useQuery(
+    void {},
+    {
+      onSuccess(itms) {
+        setItems(itms);
+      },
+    }
+  );
+
+  const { mutate: deleteItem } = api.item.deleteItem.useMutation({
+    onSuccess(ShoppingItem) {
+      setItems((prev) => prev.filter((item) => item.id !== ShoppingItem.id));
+    },
+  });
+
+  const { mutate: toggleChecked } = api.item.toggleChecked.useMutation({
+    onSuccess(ShoppingItem) {
+      setItems(
+        items.map((item) =>
+          item.id == ShoppingItem.id
+            ? { ...item, checked: !item.checked }
+            : item
+        )
+      );
+    },
+  });
+
+  if (!itemsData || isLoading) return <p>...Loading...</p>;
 
   return (
     <>
@@ -19,7 +50,9 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {modalOpen && <ItemModal setModalOpen={setModalOpen} />}
+      {modalOpen && (
+        <ItemModal setModalOpen={setModalOpen} setItems={setItems} />
+      )}
 
       <main className="mx-auto my-12 max-w-3xl">
         <header className="flex justify-between py-2 px-4">
@@ -33,10 +66,31 @@ const Home: NextPage = () => {
           </button>
         </header>
 
-        <ul>
-          {items.map((item) => (
-            <li key={item.id}>{item.name}</li>
-          ))}
+        <ul className="p-4">
+          {items.map((item) => {
+            const { id, name, checked } = item;
+            return (
+              <li key={id} className="flex w-full justify-between">
+                <div
+                  className="hover:cursor-pointer"
+                  onClick={() => toggleChecked({ id, checked: !checked })}
+                >
+                  {checked ? (
+                    <span className="text-gray-400 line-through decoration-red-500 decoration-2">
+                      {name}
+                    </span>
+                  ) : (
+                    <span>{name}</span>
+                  )}
+                </div>
+                <MdClose
+                  onClick={() => deleteItem({ id })}
+                  className="text-red-500 hover:cursor-pointer"
+                  strokeWidth={2}
+                ></MdClose>
+              </li>
+            );
+          })}
         </ul>
       </main>
     </>

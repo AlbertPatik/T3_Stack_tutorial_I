@@ -1,13 +1,19 @@
+import { ShoppingItem } from "@prisma/client";
 import React, { FC, Dispatch, useState } from "react";
 import { api } from "../utils/api";
 
 interface ItemModalProps {
   setModalOpen: Dispatch<React.SetStateAction<boolean>>;
+  setItems: Dispatch<React.SetStateAction<ShoppingItem[]>>;
 }
 
-const ItemModal: FC<ItemModalProps> = ({ setModalOpen }) => {
+const ItemModal: FC<ItemModalProps> = ({ setModalOpen, setItems }) => {
   const [input, setInput] = useState<string>("");
-  const { mutate: addItem } = api.item.addItem.useMutation();
+  const { mutate: addItem } = api.item.addItem.useMutation({
+    onSuccess(ShoppingItem) {
+      setItems((prev) => [...prev, ShoppingItem]);
+    },
+  });
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/75">
